@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 const jwt = require("jsonwebtoken")
 
+=======
+>>>>>>> 881db677b8839069823a1bed9f71e35cbe2cbecf
 class LoginService {
     constructor({ logger, userModel }) {
       this.userModel = userModel;
@@ -12,6 +15,7 @@ class LoginService {
       });
       return user;
     }
+<<<<<<< HEAD
 
     async login({username, password}){
       const userRecord = await this.userModel.findOne({
@@ -47,6 +51,8 @@ class LoginService {
         expiresIn: config.jwt.expiresIn,
       });
     }
+=======
+>>>>>>> 881db677b8839069823a1bed9f71e35cbe2cbecf
   } 
   module.exports = LoginService;
   
