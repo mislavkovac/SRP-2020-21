@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       this.hasMany(models.MedicalTest);
+      this.belongsTo(models.Role, { foreignKey: "roleId" });
     }
   }
   User.init(
@@ -17,15 +18,28 @@ module.exports = (sequelize, DataTypes) => {
       username: {
         type: DataTypes.STRING,
         validate: {
-          isUnique: async (username) => {
+          async isUnique(username) {
             const user = await User.findOne({ where: { username } });
             if (user) {
-              throw new Error("Username already in use");
+              throw new Error(`Username ${username} already in use`);
             }
           },
         },
       },
       password: DataTypes.STRING,
+      roleId: {
+        type: DataTypes.INTEGER,
+        validate: {
+          async roleExists(roleId) {
+            const role = await sequelize.models.Role.findOne({
+              where: { id: roleId },
+            });
+            if (!role) {
+              throw new Error(`Specified role ${roleId} does not exist`);
+            }
+          },
+        },
+      },
     },
     {
       sequelize,

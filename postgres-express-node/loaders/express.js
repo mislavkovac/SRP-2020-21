@@ -1,17 +1,20 @@
 const express = require("express");
+require("express-async-errors");
 const jwt = require("express-jwt");
 const cors = require("cors");
 const config = require("../config");
 const rateLimiterMiddleware = require("../api/middleware/api-rate-limiter");
+const provideAbility = require("../api/middleware/provide-ability");
 const routes = require("../api");
-module.exports = ({ app, HttpLogger: logger }) => {
+const { ForbiddenError } = require("@casl/ability");
+module.exports = ({ app, HttpLogger, Logger }) => {
   //---------------------------
   // REGISTER MIDDLEWARE
   // (Remember that the order in
   //  which you use the middleware
   //  matters.)
   //---------------------------
-  app.use(logger);
+  app.use(HttpLogger);
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
@@ -22,6 +25,7 @@ module.exports = ({ app, HttpLogger: logger }) => {
       algorithms: config.jwt.algorithms,
     }).unless(config.jwt.exclude)
   );
+  app.use(provideAbility); // this should go after jwt verification
 
   //---------------------------
   // LOAD/MOUNT API ROUTES
@@ -44,6 +48,8 @@ module.exports = ({ app, HttpLogger: logger }) => {
     if (err.name === "UnauthorizedError") {
       err.status = 401;
       err.message = "Not authorized (invalid token)";
+    } else if (err instanceof ForbiddenError) {
+      err.status = 403;
     }
 
     res.status(err.status || 500).json({
@@ -51,5 +57,7 @@ module.exports = ({ app, HttpLogger: logger }) => {
         message: err.message || "Internal Server Error",
       },
     });
+
+    Logger.error("Error %o", err);
   });
 };
